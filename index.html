@@ -14,11 +14,12 @@
 
         body {
             font-family: 'Arial', sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #000000;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
+            justify-content: center;
             padding: 20px;
         }
 
@@ -29,6 +30,17 @@
             border-radius: 15px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             overflow: hidden;
+        }
+
+        .logo-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .logo-section img {
+            max-width: 120px;
+            height: auto;
+            margin-bottom: 10px;
         }
 
         .header {
@@ -61,9 +73,10 @@
 
         .controls {
             display: flex;
-            gap: 10px;
+            gap: 15px;
             justify-content: center;
             margin-bottom: 20px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -220,20 +233,28 @@
 
         /* Responsive Design */
         @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+
+            .logo-section img {
+                max-width: 100px;
+            }
+
             .container {
                 margin: 10px;
                 border-radius: 10px;
             }
-            
+
             .header h1 {
                 font-size: 20px;
             }
-            
+
             .btn {
                 padding: 10px 20px;
                 font-size: 14px;
             }
-            
+
             .modal-content {
                 margin: 20% auto;
                 width: 95%;
@@ -242,6 +263,10 @@
     </style>
 </head>
 <body>
+    <div class="logo-section">
+        <img src="https://i.ibb.co/gMVM8zD2/Asset-8.png" alt="MLRIT Logo">
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>🚌 MLRIT BUS QR Scanner</h1>
@@ -254,7 +279,6 @@
             <div class="controls">
                 <button id="start-btn" class="btn btn-primary">📷 Start Scanner</button>
                 <button id="stop-btn" class="btn btn-danger" disabled>⏹️ Stop Scanner</button>
-                <button id="test-btn" class="btn btn-primary" style="background: #9b59b6;">🧪 Test QR</button>
             </div>
             
             <div id="status" class="status"></div>
@@ -287,7 +311,6 @@
             initializeElements() {
                 this.startBtn = document.getElementById('start-btn');
                 this.stopBtn = document.getElementById('stop-btn');
-                this.testBtn = document.getElementById('test-btn');
                 this.status = document.getElementById('status');
                 this.modal = document.getElementById('resultModal');
                 this.modalHeader = document.getElementById('modal-header');
@@ -300,7 +323,6 @@
             bindEvents() {
                 this.startBtn.addEventListener('click', () => this.startScanning());
                 this.stopBtn.addEventListener('click', () => this.stopScanning());
-                this.testBtn.addEventListener('click', () => this.testQRCode());
                 this.closeBtn.addEventListener('click', () => this.closeModal());
 
                 // Close modal when clicking outside
@@ -356,19 +378,7 @@
                 }
             }
 
-            testQRCode() {
-                // Test with valid QR data
-                const testData = `Name:John Doe
-Dept:CSE
-RollNo:21A91A0501
-Year:3
-Route:Route-1
-Boarding:Main Gate
-Amount:1500`;
 
-                console.log('Testing with sample QR data:', testData);
-                this.onScanSuccess(testData);
-            }
 
             onScanSuccess(decodedText) {
                 console.log('QR Code detected:', decodedText);
