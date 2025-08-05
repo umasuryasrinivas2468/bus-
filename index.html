@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner - MLRIT BUS</title>
+    <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .scanner-section {
+            padding: 20px;
+        }
+
+        #reader {
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: #e74c3c;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+            transform: translateY(-2px);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .status {
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            display: none;
+        }
+
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: white;
+            margin: 10% auto;
+            padding: 0;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            animation: slideIn 0.3s ease;
+        }
+
+        .modal-header {
+            padding: 20px;
+            text-align: center;
+            border-radius: 15px 15px 0 0;
+        }
+
+        .modal-header.success {
+            background: #28a745;
+            color: white;
+        }
+
+        .modal-header.error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .modal-header h2 {
+            font-size: 24px;
+            margin-bottom: 10px;
+        }
+
+        .modal-body {
+            padding: 20px;
+        }
+
+        .data-field {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-field:last-child {
+            border-bottom: none;
+        }
+
+        .field-label {
+            font-weight: bold;
+            color: #333;
+        }
+
+        .field-value {
+            color: #666;
+            text-align: right;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            position: absolute;
+            right: 15px;
+            top: 15px;
+        }
+
+        .close:hover {
+            color: white;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 10px;
+            }
+            
+            .header h1 {
+                font-size: 20px;
+            }
+            
+            .btn {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+            
+            .modal-content {
+                margin: 20% auto;
+                width: 95%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚌 MLRIT BUS QR Scanner</h1>
+            <p>Scan student bus pass QR codes for verification</p>
+        </div>
+        
+        <div class="scanner-section">
+            <div id="reader"></div>
+            
+            <div class="controls">
+                <button id="start-btn" class="btn btn-primary">📷 Start Scanner</button>
+                <button id="stop-btn" class="btn btn-danger" disabled>⏹️ Stop Scanner</button>
+                <button id="test-btn" class="btn btn-primary" style="background: #9b59b6;">🧪 Test QR</button>
+            </div>
+            
+            <div id="status" class="status"></div>
+        </div>
+    </div>
+
+    <!-- Modal for displaying results -->
+    <div id="resultModal" class="modal">
+        <div class="modal-content">
+            <div id="modal-header" class="modal-header">
+                <span class="close">&times;</span>
+                <h2 id="modal-title"></h2>
+                <p id="modal-subtitle"></p>
+            </div>
+            <div class="modal-body">
+                <div id="modal-data"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class QRScanner {
+            constructor() {
+                this.html5QrCode = null;
+                this.isScanning = false;
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.startBtn = document.getElementById('start-btn');
+                this.stopBtn = document.getElementById('stop-btn');
+                this.testBtn = document.getElementById('test-btn');
+                this.status = document.getElementById('status');
+                this.modal = document.getElementById('resultModal');
+                this.modalHeader = document.getElementById('modal-header');
+                this.modalTitle = document.getElementById('modal-title');
+                this.modalSubtitle = document.getElementById('modal-subtitle');
+                this.modalData = document.getElementById('modal-data');
+                this.closeBtn = document.querySelector('.close');
+            }
+
+            bindEvents() {
+                this.startBtn.addEventListener('click', () => this.startScanning());
+                this.stopBtn.addEventListener('click', () => this.stopScanning());
+                this.testBtn.addEventListener('click', () => this.testQRCode());
+                this.closeBtn.addEventListener('click', () => this.closeModal());
+
+                // Close modal when clicking outside
+                window.addEventListener('click', (event) => {
+                    if (event.target === this.modal) {
+                        this.closeModal();
+                    }
+                });
+            }
+
+            async startScanning() {
+                try {
+                    this.html5QrCode = new Html5Qrcode("reader");
+                    
+                    const config = {
+                        fps: 10,
+                        qrbox: { width: 250, height: 250 },
+                        aspectRatio: 1.0
+                    };
+
+                    await this.html5QrCode.start(
+                        { facingMode: "environment" },
+                        config,
+                        (decodedText, decodedResult) => {
+                            this.onScanSuccess(decodedText);
+                        },
+                        (errorMessage) => {
+                            // Handle scan errors silently
+                        }
+                    );
+
+                    this.isScanning = true;
+                    this.updateUI();
+                    this.showStatus('Scanner started successfully', 'success');
+
+                } catch (err) {
+                    console.error('Error starting scanner:', err);
+                    this.showStatus('Failed to start scanner. Please check camera permissions.', 'error');
+                }
+            }
+
+            async stopScanning() {
+                if (this.html5QrCode && this.isScanning) {
+                    try {
+                        await this.html5QrCode.stop();
+                        this.html5QrCode.clear();
+                        this.isScanning = false;
+                        this.updateUI();
+                        this.showStatus('Scanner stopped', 'success');
+                    } catch (err) {
+                        console.error('Error stopping scanner:', err);
+                    }
+                }
+            }
+
+            testQRCode() {
+                // Test with valid QR data
+                const testData = `Name:John Doe
+Dept:CSE
+RollNo:21A91A0501
+Year:3
+Route:Route-1
+Boarding:Main Gate
+Amount:1500`;
+
+                console.log('Testing with sample QR data:', testData);
+                this.onScanSuccess(testData);
+            }
+
+            onScanSuccess(decodedText) {
+                console.log('QR Code detected:', decodedText);
+
+                // Stop scanning temporarily to process result
+                if (this.isScanning) {
+                    this.stopScanning();
+                }
+
+                // Parse the QR code data
+                const parsedData = this.parseQRData(decodedText);
+                console.log('Parsed data:', parsedData);
+
+                // Show result modal
+                this.showResultModal(parsedData);
+            }
+
+            parseQRData(qrText) {
+                const requiredFields = ['Name', 'Dept', 'RollNo', 'Year', 'Route', 'Boarding', 'Amount'];
+                const data = {};
+                let isValid = true;
+                let missingFields = [];
+
+                // Split by lines and parse each field
+                const lines = qrText.split('\n').map(line => line.trim()).filter(line => line);
+                
+                lines.forEach(line => {
+                    const colonIndex = line.indexOf(':');
+                    if (colonIndex > 0) {
+                        const key = line.substring(0, colonIndex).trim();
+                        const value = line.substring(colonIndex + 1).trim();
+                        data[key] = value;
+                    }
+                });
+
+                // Check if all required fields are present and not empty
+                requiredFields.forEach(field => {
+                    if (!data[field] || data[field] === '') {
+                        isValid = false;
+                        missingFields.push(field);
+                    }
+                });
+
+                return {
+                    isValid,
+                    data,
+                    missingFields,
+                    rawData: qrText
+                };
+            }
+
+            showResultModal(parsedData) {
+                console.log('Showing result modal with data:', parsedData);
+                const { isValid, data, missingFields } = parsedData;
+
+                if (isValid) {
+                    // Success case
+                    this.modalHeader.className = 'modal-header success';
+                    this.modalTitle.textContent = '✅ Verified';
+                    this.modalSubtitle.textContent = 'All required fields are present';
+
+                    // Display all data fields
+                    this.modalData.innerHTML = Object.entries(data)
+                        .map(([key, value]) => `
+                            <div class="data-field">
+                                <span class="field-label">${key}:</span>
+                                <span class="field-value">${value}</span>
+                            </div>
+                        `).join('');
+
+                } else {
+                    // Failure case
+                    this.modalHeader.className = 'modal-header error';
+                    this.modalTitle.textContent = '❌ Not Verified';
+                    this.modalSubtitle.textContent = `Missing or corrupted fields: ${missingFields.join(', ')}`;
+
+                    // Display available data and highlight missing fields
+                    const requiredFields = ['Name', 'Dept', 'RollNo', 'Year', 'Route', 'Boarding', 'Amount'];
+                    this.modalData.innerHTML = requiredFields
+                        .map(field => {
+                            const value = data[field] || 'MISSING';
+                            const isMissing = !data[field] || data[field] === '';
+                            return `
+                                <div class="data-field" style="${isMissing ? 'color: #dc3545; font-weight: bold;' : ''}">
+                                    <span class="field-label">${field}:</span>
+                                    <span class="field-value">${value}</span>
+                                </div>
+                            `;
+                        }).join('');
+                }
+
+                console.log('Setting modal display to block');
+                this.modal.style.display = 'block';
+
+                // Force a reflow to ensure the modal is visible
+                this.modal.offsetHeight;
+            }
+
+            closeModal() {
+                this.modal.style.display = 'none';
+            }
+
+            updateUI() {
+                this.startBtn.disabled = this.isScanning;
+                this.stopBtn.disabled = !this.isScanning;
+            }
+
+            showStatus(message, type) {
+                this.status.textContent = message;
+                this.status.className = `status ${type}`;
+                this.status.style.display = 'block';
+                
+                // Hide status after 3 seconds
+                setTimeout(() => {
+                    this.status.style.display = 'none';
+                }, 3000);
+            }
+        }
+
+        // Initialize the QR Scanner when the page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new QRScanner();
+        });
+    </script>
+</body>
+</html>
